@@ -213,6 +213,9 @@ class WP_Slack_Event_Manager {
 	}
 }
 
+//Add the event 'award achievement' to the list of pre-defined events
+//When a badge is awarded a message containing an attachment (text+image) is sent
+//to slack, empty fields are kept for further modifications
 add_filter( 'slack_get_events', function( $events ) {
     $events['award_achievement'] = array(
         'action'      => 'badgeos_award_achievement',
@@ -220,36 +223,40 @@ add_filter( 'slack_get_events', function( $events ) {
         'default'     => true,
         'description' => __( 'When user earns an achievement', 'slack' ),
         'message'     => function($user_id = 0, $achievement_id = 0, $trigger = '') {
+            $type = get_post_type($achievement_id);
+            if($type == 'step') {
+                return;
+            }
+            return ' ';
+        },
+        'attachments'   => function($user_id = 0, $achievement_id = 0, $trigger = '') {
             $achievement_title = get_the_title($achievement_id);
             $user = get_user_by('id', $user_id);
             $type = get_post_type($achievement_id);
             if($type == 'nomination' || $type == 'submission' || $type == 'badges') {
                 $type = 'badge';
             }
-            if($type == 'step') {
-                return;
-            }
             $not_escaped = array('<', '>', '&nbsp;', '&laquo;', '&raquo;');
             $new_str = array('&lt;', '&gt;', ' ', '<<', '>>');
             $achievement_title = str_replace($not_escaped, $new_str, $achievement_title);
             $link = str_replace($not_escaped, $new_str, get_permalink($achievement_id));
-            return '_'.$user->display_name.'_ earned the '.$type.' <'.$link.'|'.$achievement_title. '>';
-        },
-        'attachments'   => function($user_id = 0, $achievement_id = 0, $trigger = '') {
-                       return '';/*array(
-                            'fallback' => 'Badge award',
+            $text = '_'.$user->display_name.'_ earned the '.$type.' <'.$link.'|'.$achievement_title. '>';
+            return array(   'fallback' => 'Badge award',
                             'color'    => '#36a64f',
                             'pretext'  => '',
                             'author_name' => '',
-                            'title'    =>  '',
+                            'author_link' => '',
+                            'author_icon' => '',
+                            'title'    =>  'New achievement awarded !',
                             'title_link' => '',
-                            'text' => '',
+                            'text' => $text,
+                            'mrkdwn_in' => array("text"),
                             'image_url' => '',
-                            thumb_url' => '',
-                        );*/
+                            'thumb_url' => wp_get_attachment_image_src( get_post_thumbnail_id( $achievement_id), array('100', '100'))[0],
+                        );
         },   
         'icon_url'   => function($user_id = 0, $achievement_id = 0, $trigger = '') {
-                       //return wp_get_attachment_image_src( get_post_thumbnail_id( $achievement_id), array('100', '100'))[0];
+                       return '';
         },
 				
     );
