@@ -226,10 +226,14 @@ add_filter( 'slack_get_events', function( $events ) {
             if($type == 'nomination' || $type == 'submission' || $type == 'badges') {
                 $type = 'badge';
             }
+            if($type == 'step') {
+                return;
+            }
             $not_escaped = array('<', '>', '&nbsp;', '&laquo;', '&raquo;');
             $new_str = array('&lt;', '&gt;', ' ', '<<', '>>');
             $achievement_title = str_replace($not_escaped, $new_str, $achievement_title);
-            return '_'.$user->display_name.'_ earned the '.$type.' <'.get_permalink($achievement_id).'|'.$achievement_title. '>';
+            $link = str_replace($not_escaped, $new_str, get_permalink($achievement_id));
+            return '_'.$user->display_name.'_ earned the '.$type.' <'.$link.'|'.$achievement_title. '>';
         },
         'attachments'   => function($user_id = 0, $achievement_id = 0, $trigger = '') {
                        return '';/*array(
@@ -245,7 +249,7 @@ add_filter( 'slack_get_events', function( $events ) {
                         );*/
         },   
         'icon_url'   => function($user_id = 0, $achievement_id = 0, $trigger = '') {
-                       return wp_get_attachment_image_src( get_post_thumbnail_id( $achievement_id), array('100', '100'))[0];
+                       //return wp_get_attachment_image_src( get_post_thumbnail_id( $achievement_id), array('100', '100'))[0];
         },
 				
     );
